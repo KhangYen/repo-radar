@@ -121,6 +121,10 @@ function toast(msg) {
 }
 
 ["q","lang","bucket"].forEach(id => $(id).addEventListener("input", render));
+
+// Anonymous pageview beacon: one cache-busted hit to jsDelivr's CDN per load.
+// Counts aggregate requests only — no cookies, no visitor data, nothing stored.
+new Image().src = "https://cdn.jsdelivr.net/gh/KhangYen/repo-radar@main/docs/pixel.png?t=" + Date.now();
 </script>
 </body>
 </html>
