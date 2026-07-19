@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RepoRadar — trending GitHub repos, ranked by real momentum & HN buzz</title>
+<meta name="description" content="Daily-updated list of trending GitHub repositories ranked by real star momentum, with Hacker News buzz. Free, no signup. Embed your rank badge.">
+<style>
+  :root {
+    --bg:#f6f7f9; --panel:#fff; --text:#1a1d21; --muted:#5c6470;
+    --accent:#2563eb; --border:#d8dde3; --hot:#ea580c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#101318; --panel:#181d24; --text:#e8eaed; --muted:#98a1ad;
+            --accent:#3b82f6; --border:#2a323d; --hot:#fb923c; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); line-height:1.45; }
+  .wrap { max-width:1000px; margin:0 auto; padding:26px 16px 50px; }
+  h1 { margin:0 0 2px; font-size:26px; }
+  .tag { color:var(--muted); margin:0 0 14px; }
+  .bar { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 14px; align-items:center; }
+  select, input[type=search] { background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:14px; }
+  input[type=search] { flex:1; min-width:160px; }
+  .meta { font-size:12px; color:var(--muted); margin-left:auto; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:8px; display:grid; grid-template-columns:44px 1fr auto; gap:10px; align-items:start; }
+  .rank { font-size:18px; font-weight:800; color:var(--muted); padding-top:2px; }
+  .rank.top { color:var(--hot); }
+  .name { font-weight:700; font-size:15px; text-decoration:none; color:var(--accent); word-break:break-all; }
+  .desc { margin:2px 0 6px; font-size:13px; color:var(--muted); }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; font-size:12px; }
+  .chip { border:1px solid var(--border); border-radius:20px; padding:1px 9px; color:var(--muted); }
+  .chip.delta { color:var(--hot); border-color:var(--hot); font-weight:700; }
+  .chip.hn a { color:inherit; text-decoration:none; }
+  .stars { font-weight:700; white-space:nowrap; font-size:14px; }
+  .badgebtn { background:none; border:1px solid var(--border); color:var(--muted); border-radius:6px; font-size:11px; padding:3px 8px; cursor:pointer; margin-top:6px; }
+  .badgebtn:hover { color:var(--accent); border-color:var(--accent); }
+  footer { margin-top:26px; font-size:13px; color:var(--muted); }
+  footer a { color:var(--accent); }
+  #toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:var(--text); color:var(--bg); border-radius:8px; padding:8px 16px; font-size:13px; opacity:0; transition:opacity .25s; pointer-events:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>RepoRadar</h1>
+  <p class="tag">Trending GitHub repos ranked by real day-over-day star momentum, with Hacker News buzz. Updates daily, free forever.</p>
+  <div class="bar">
+    <input type="search" id="q" placeholder="filter by name or description…">
+    <select id="lang"><option value="">all languages</option></select>
+    <select id="bucket">
+      <option value="">new + rising</option>
+      <option value="new">hot new repos</option>
+      <option value="rising">rising established</option>
+    </select>
+    <span class="meta" id="meta"></span>
+  </div>
+  <div id="list"></div>
+  <footer>
+    <p><strong>Embed your badge:</strong> click "badge" on your repo's row to copy ready-made Markdown — show your rank, link back here.</p>
+    <p>Built by an AI agent (Claude), supervised by a human · <a href="https://github.com/KhangYen/repo-radar">source & data</a> · also free: <a href="https://khangyen.github.io/subtitle-toolbox/">Subtitle Toolbox</a></p>
+  </footer>
+</div>
+<div id="toast"></div>
+<script>
+"use strict";
+let DATA = null;
+const $ = id => document.getElementById(id);
+
+fetch("data.json").then(r => r.json()).then(d => {
+  DATA = d;
+  $("meta").textContent = "updated " + new Date(d.generated).toLocaleDateString();
+  const langs = [...new Set(d.repos.map(r => r.language).filter(Boolean))].sort();
+  for (const l of langs) {
+    const o = document.createElement("option");
+    o.value = o.textContent = l;
+    $("lang").appendChild(o);
+  }
+  render();
+});
+
+function render() {
+  const q = $("q").value.toLowerCase(), lang = $("lang").value, bucket = $("bucket").value;
+  const rows = DATA.repos.filter(r =>
+    (!q || r.full_name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q)) &&
+    (!lang || r.language === lang) && (!bucket || r.bucket === bucket)
+  );
+  $("list").innerHTML = rows.map(r => `
+    <div class="card">
+      <div class="rank ${r.rank <= 10 ? "top" : ""}">#${r.rank}</div>
+      <div>
+        <a class="name" href="${r.url}" rel="noopener">${esc(r.full_name)}</a>
+        <div class="desc">${esc(r.description)}</div>
+        <div class="chips">
+          ${r.language ? `<span class="chip">${esc(r.language)}</span>` : ""}
+          ${r.delta !== null && r.delta > 0 ? `<span class="chip delta">+${fmt(r.delta)}★ today</span>` : ""}
+          <span class="chip">${r.bucket === "new" ? "new · " + esc(r.created_at) : "rising"}</span>
+          ${r.hn ? `<span class="chip hn"><a href="${r.hn.url}" rel="noopener">HN ${r.hn.points}pts</a></span>` : ""}
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div class="stars">${fmt(r.stars)}★</div>
+        ${r.rank <= 50 ? `<button class="badgebtn" onclick="badge('${r.full_name}',${r.rank})">badge</button>` : ""}
+      </div>
+    </div>`).join("");
+}
+
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function fmt(n) { return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/,"") + "k" : n; }
+
+function badge(fullName, rank) {
+  const site = location.origin + location.pathname.replace(/index\.html$/, "");
+  const endpoint = site + "badges/" + fullName.replace("/", "--") + ".json";
+  const md = `[![RepoRadar #${rank} trending](https://img.shields.io/endpoint?url=${encodeURIComponent(endpoint)})](${site})`;
+  navigator.clipboard.writeText(md).then(() => toast("Badge Markdown copied — paste it in your README"));
+}
+
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg; t.style.opacity = 1;
+  setTimeout(() => t.style.opacity = 0, 2500);
+}
+
+["q","lang","bucket"].forEach(id => $(id).addEventListener("input", render));
+</script>
+</body>
+</html>
