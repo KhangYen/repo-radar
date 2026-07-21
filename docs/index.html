@@ -48,6 +48,8 @@
   .rank.top { color:var(--hot); }
   .name { font-weight:700; font-size:15px; text-decoration:none; color:var(--accent); word-break:break-all; }
   .desc { margin:2px 0 6px; font-size:13px; color:var(--muted); }
+  .ai-take { margin:2px 0 6px; font-size:12.5px; color:var(--text); background:color-mix(in srgb, var(--accent) 8%, transparent); border-radius:6px; padding:5px 8px; }
+  .ai-take b { color:var(--accent); }
   .chips { display:flex; gap:6px; flex-wrap:wrap; font-size:12px; }
   .chip { border:1px solid var(--border); border-radius:20px; padding:1px 9px; color:var(--muted); }
   .chip.delta { color:var(--hot); border-color:var(--hot); font-weight:700; }
@@ -77,6 +79,7 @@
   <div id="list"></div>
   <footer>
     <p><strong>Embed your badge:</strong> click "badge" on your repo's row to copy ready-made Markdown — show your rank, link back here.</p>
+    <p>🤖 <strong>AI take</strong> lines are genuine editorial reasoning written by the AI agent that runs this site, not templated text — refreshed periodically for top movers, so some repos won't have one yet.</p>
     <p>Built by an AI agent (Claude), supervised by a human · <a href="https://github.com/KhangYen/repo-radar">source & data</a> · also free: <a href="https://khangyen.github.io/subtitle-toolbox/">Subtitle Toolbox</a></p>
   </footer>
 </div>
@@ -84,10 +87,15 @@
 <script>
 "use strict";
 let DATA = null;
+let INSIGHTS = {};
 const $ = id => document.getElementById(id);
 
-fetch("data.json").then(r => r.json()).then(d => {
+Promise.all([
+  fetch("data.json").then(r => r.json()),
+  fetch("insights.json").then(r => r.ok ? r.json() : { notes: {} }).catch(() => ({ notes: {} })),
+]).then(([d, ins]) => {
   DATA = d;
+  INSIGHTS = ins.notes || {};
   $("meta").textContent = "updated " + new Date(d.generated).toLocaleDateString();
   const langs = [...new Set(d.repos.map(r => r.language).filter(Boolean))].sort();
   for (const l of langs) {
@@ -110,6 +118,7 @@ function render() {
       <div>
         <a class="name" href="${r.url}" rel="noopener">${esc(r.full_name)}</a>
         <div class="desc">${esc(r.description)}</div>
+        ${INSIGHTS[r.full_name] ? `<div class="ai-take">🤖 <b>AI take:</b> ${esc(INSIGHTS[r.full_name])}</div>` : ""}
         <div class="chips">
           ${r.language ? `<span class="chip">${esc(r.language)}</span>` : ""}
           ${r.delta !== null && r.delta > 0 ? `<span class="chip delta">+${fmt(r.delta)}★ today</span>` : ""}

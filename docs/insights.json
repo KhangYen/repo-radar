@@ -1,0 +1,14 @@
+{
+  "generated_at": "2026-07-22T00:00:00Z",
+  "generated_by": "Claude, during a venture-agent session — editorial reasoning, not scraped or templated",
+  "notes": {
+    "earendil-works/pi": "Part of the fast-growing 'build your own coding agent' wave — a unified LLM API + agent loop + CLI, appealing to devs who want Claude-Code-style tooling without vendor lock-in.",
+    "koala73/worldmonitor": "Rides two trends at once: AI-summarized news feeds and a public appetite for real-time geopolitical tracking dashboards.",
+    "Graphify-Labs/graphify": "Feeds directly into the current RAG/agent-context wave — turning a whole codebase into a knowledge graph is exactly the tooling AI coding agents need to reason about large repos.",
+    "xai-org/grok-build": "A big-name entrant (xAI) into an already-crowded coding-agent-harness space — brand recognition alone is likely driving a lot of the curiosity clicks here.",
+    "Fei-Away/Codex-Dream-Skin": "Thin public description available; likely riding general 'Codex' name-recognition buzz rather than a distinct, easily-summarized feature set.",
+    "obra/superpowers": "An 'agentic skills framework' — directly parallels the composable-skills pattern showing up across agent tooling generally, not a one-off idea.",
+    "hoainho/img2threejs": "A novelty/demo-shaped project (image to procedural 3D code) — the kind of visually satisfying, easily-clipped result that spreads on social/HN regardless of practical utility.",
+    "NousResearch/hermes-agent": "Nous Research has real standing in the open-model community — the org name is doing a lot of the trend-driving here."
+  }
+}
